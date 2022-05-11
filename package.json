@@ -17,5 +17,10 @@
     "url": "https://github.com/SiddharthShyniben/req/issues"
   },
   "homepage": "https://github.com/SiddharthShyniben/req#readme",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "ini-parser": "^0.0.2",
+    "nanoparse": "^1.0.0",
+    "planckcolors": "^1.2.0"
+  }
 }
