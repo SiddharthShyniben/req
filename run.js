@@ -192,7 +192,11 @@ export default function run(args) {
 		}
 	}).catch(e => {
 		console.error(color.red('Failed to fetch!'))
-		console.error(e.name + ': ' + e.message)
+
+		if (e.message.toLowerCase().includes('invalid url')) console.error('You passed an invalid URL!')
+		else console.error(e.name + ': ' + e.message);
+
+		process.exit(1)
 	})
 }
 
@@ -212,6 +216,7 @@ function commonHiddenFilters(show) {
 }
 
 function colorStatus(status) {
+	if (status === '418 I\'M A TEAPOT') return randomColor(status);
 	return {
 		2: color.green(status),
 		3: color.yellow(status),
@@ -228,4 +233,19 @@ function colorMethod(method) {
 		delete: color.red
 	}[method.toLowerCase()] ?? color.bold;
 	return c(method);
+}
+
+function randomColor(str) {
+	const colors = [
+		color.magenta,
+		color.blue,
+		color.green,
+		color.yellow,
+		color.red,
+		color.yellow,
+		color.green,
+		color.blue
+	]
+
+	return str.split('').map((c, i) => colors[i % colors.length](c)).join('')
 }

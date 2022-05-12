@@ -66,11 +66,7 @@ export function parse(text) {
 
 			ret.method = method;
 
-			try {
-				ret.url = new URL(url).toString();
-			} catch (e) {
-				throw new Error(`Error on line ${line}: Invalid URL ${url}`);
-			}
+			ret.url = url;
 
 			ret.version = realVersion;
 
