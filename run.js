@@ -77,7 +77,7 @@ const STATUSES = {
 	511: 'NETWORK AUTHENTICATION REQUIRED',
 }
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = process.cwd();
 
 export default function run(args) {
 	const file = args._[1];
@@ -112,10 +112,17 @@ export default function run(args) {
 
 	const variables = Object.assign({}, getVariables(), args.flags);
 	Object.entries(variables).forEach(([v, val]) => {
+		url = url.replaceAll(`%7B${v}%7D`, val);
 		url = url.replaceAll(`{${v}}`, val);
 		if (typeof body === 'object') Object.keys(body).forEach(key => {
+			body[key] = body[key].replaceAll(`%7B${v}%7D`, val);
 			body[key] = body[key].replaceAll(`{${v}}`, val);
 		});
+	});
+
+	url = url.replace(/{\w+[ \t]*\|[ \t]*(\d+)}/g, '$1');
+	if (typeof body === 'object') Object.keys(body).forEach(key => {
+		body[key] = body[key].replaceAll(/{\w+[ \t]*\|[ \t]*(\d+)}/g, '$1');
 	});
 
 	let showFullResponse;
@@ -153,6 +160,8 @@ export default function run(args) {
 			}
 		}
 	}).then(res => {
+		console.log(colorMethod(method), color.bold(url))
+
 		console.log(color.bold('  Status:'), colorStatus(res.status + ' ' + STATUSES[res.status] ?? 'UNKNOWN'));
 
 		const hidden = Object.fromEntries(Object.entries(res.headers).filter(commonHiddenFilters(showFullHeaders)))
@@ -166,12 +175,21 @@ export default function run(args) {
 		let type = res.headers['content-type'];
 		if (type) type = type.split(';')[0].trim();
 		console.log(color.bold('  Body') + color.dim(type ? ` (${type})` : '') + color.bold(':'));
+
+		const inspected = inspect(res.body, {depth: null, colors: true, maxStringLength: showFullResponse ? Infinity : 1000, maxArrayLength: showFullResponse ? Infinity : 100})
+		const sliceLength = process.stdout.rows - (10 + Object.keys(hidden).length);
+		
 		console.log(
-			inspect(res.body, {depth: null, colors: true, maxStringLength: showFullResponse ? Infinity : 1000, maxArrayLength: showFullResponse ? Infinity : 100})
+			inspected
 				.split('\n')
+				.slice(0, showFullResponse ? Infinity : sliceLength)
 				.map(line => '    ' + line)
 				.join('\n')
 		);
+
+		if (inspected.split('\n').length > sliceLength) {
+			console.log(color.dim( `    ...${inspected.split('\n').length - sliceLength} more lines (use`), color.bold('--full-response'), color.dim('to see the whole response)'))
+		}
 	}).catch(e => {
 		console.error(color.red('Failed to fetch!'))
 		console.error(e.name + ': ' + e.message)
@@ -179,7 +197,7 @@ export default function run(args) {
 }
 
 function commonHiddenFilters(show) {
-	return show ? () => true : ([k, v]) => {
+	return show ? () => true : ([k]) => {
 		const hidden = [
 			'nel', 'server', 'via', 'x-powered-by', 'alt-svc', 'connection', 'content-length', 'etag', 'report-to', 'expect-ct', 'content-type',
 			'set-cookie', 'expires', 'p3p', 'cache-control'
@@ -200,4 +218,14 @@ function colorStatus(status) {
 		4: color.red(status),
 		5: color.red(status)
 	}[Math.floor((+status.split(' ')[0]) / 100)] ?? status;
+}
+
+function colorMethod(method) {
+	const c = {
+		get: color.green,
+		post: color.yellow,
+		put: color.cyan,
+		delete: color.red
+	}[method.toLowerCase()] ?? color.bold;
+	return c(method);
 }

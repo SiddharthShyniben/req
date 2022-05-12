@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import nanoparse from 'nanoparse';
 import color from 'planckcolors';
 

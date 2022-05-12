@@ -13,11 +13,11 @@ const clean = line => line.replace(/^\/\/.+/g, '').replace(/^#.+/g, '').trim();
 
 export function parse(text) {
 	const ret = {
-		method: null,
-		url: null,
-		version: null,
+		method: undefined,
+		url: undefined,
+		version: undefined,
 		headers: {},
-		body: null,
+		body: undefined,
 	};
 	const lines = text.split('\n');
 
