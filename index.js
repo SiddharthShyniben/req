@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 
 import nanoparse from 'nanoparse';
+import unbug from 'unbug';
 import color from 'planckcolors';
 
 import './warning.js';
 
 import init from './init.js';
 import run from './run.js';
+import help from './help.js';
 
 const args = nanoparse(process.argv.slice(2));
 const command = args._[0];
+
+const debug = unbug('controller');
 
 const commands = {
 	default: () => {
@@ -19,16 +23,14 @@ const commands = {
 		console.log(color.red('No command detected!'));
 		console.log('Run', color.bold(color.green('req help')), 'for more information.');
 	},
-	help: () => {
-		console.log(color.bold(color.green('Available commands:')));
-		console.log(color.green('req help                 - Shows this message.'));
-		console.log(color.green('req init                 - Initializes a new project.'));
-		console.log(color.green('req run <req> [params]   - Runs a request.'));
-	},
+	help,
 	init,
 	run
 }
 
+debug('Starting up...')
+debug('Command:', command)
+debug('Args:', args)
 
 if (!command) {
 	commands.no_command();

@@ -1,11 +1,13 @@
 import color from 'planckcolors';
-import {dirname, resolve} from 'path';
+import {resolve} from 'path';
 import {readFileSync} from 'fs';
-import {fileURLToPath} from 'url';
 import {parse} from './parse.js';
 import {getVariables} from './config.js';
 import {inspect} from 'util';
 import fetch from 'node-fetch';
+import unbug from 'unbug';
+
+const debug = unbug('run');
 
 const STATUSES = {
 	100: 'CONTINUE',
@@ -81,6 +83,7 @@ const __dirname = process.cwd();
 
 export default function run(args) {
 	const file = args._[1];
+	debug('Running file', file)
 
 	if (!file) {
 		console.error(color.red('No file specified!'));
@@ -88,11 +91,13 @@ export default function run(args) {
 	}
 
 	const path = resolve(__dirname, '.req', `${file}.http`);
+	debug('Reading', path)
 	let content;
 
 	try {
 		content = readFileSync(path, 'utf8');
 	} catch (e) {
+		debug('Error reading:', e)
 		if (e.code === 'ENOENT') {
 			console.error(color.red(`Request ${file} not found!`));
 			process.exit(1);
@@ -102,6 +107,10 @@ export default function run(args) {
 	}
 
 	let {method, headers, body, url} = parse(content);
+	debug('Method is', method)
+	debug('Headers are', headers)
+	debug('Body is', body)
+	debug('URL is', url)
 
 	if (method === 'GET' || method === 'HEAD') {
 		if (body) {
@@ -110,42 +119,34 @@ export default function run(args) {
 		}
 	}
 
-	const variables = Object.assign({}, getVariables(), args.flags);
-	Object.entries(variables).forEach(([v, val]) => {
-		url = url.replaceAll(`%7B${v}%7D`, val);
-		url = url.replaceAll(`{${v}}`, val);
-		if (typeof body === 'object') Object.keys(body).forEach(key => {
-			body[key] = body[key].replaceAll(`%7B${v}%7D`, val);
-			body[key] = body[key].replaceAll(`{${v}}`, val);
-		});
-	});
-
-	url = url.replace(/{\w+[ \t]*\|[ \t]*(\d+)}/g, '$1');
-	if (typeof body === 'object') Object.keys(body).forEach(key => {
-		body[key] = body[key].replaceAll(/{\w+[ \t]*\|[ \t]*(\d+)}/g, '$1');
-	});
-
 	let showFullResponse;
 	let showFullHeaders;
 
 	if (args.flags.full) {
 		showFullResponse = true;
 		showFullHeaders = true;
+		delete args.flags.full;
 	}
 
 	if ('all-headers' in args.flags) {
 		showFullHeaders = args.flags['all-headers'];
+		delete args.flags['all-headers'];
 	}
 
 	if ('full-response' in args.flags) {
 		showFullResponse = args.flags['full-response'];
+		delete args.flags['full-response'];
 	}
 
-	fetch(url, {
-		method,
-		headers,
-		body
-	}).then(async res => {
+	const variables = Object.assign({}, getVariables(), args.flags);
+	const addVariables = x => x.replace(/{(\w+)[ \t]*(?:\|[ \t]*(.+))?}/g, (_, key, def) => variables[key] ?? def ?? '')
+
+	url = addVariables(url);
+	Object.keys(headers).forEach(key => headers[key] = addVariables(headers[key]))
+	if (typeof body === 'object') Object.keys(body).forEach(key => body[key] = addVariables(body[key]))
+	if (typeof body === 'string') body = addVariables(body);
+
+	fetch(url, {method, headers, body}).then(async res => {
 		try {
 			return {
 				status: res.status,
@@ -188,7 +189,7 @@ export default function run(args) {
 		);
 
 		if (inspected.split('\n').length > sliceLength) {
-			console.log(color.dim( `    ...${inspected.split('\n').length - sliceLength} more lines (use`), color.bold('--full-response'), color.dim('to see the whole response)'))
+			console.log(color.dim( `    ...${inspected.split('\n').length - sliceLength} more lines (use`), color.yellow('--full-response'), color.dim('to see the whole response)'))
 		}
 	}).catch(e => {
 		console.error(color.red('Failed to fetch!'))

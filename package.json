@@ -18,10 +18,12 @@
   "homepage": "https://github.com/SiddharthShyniben/req#readme",
   "type": "module",
   "dependencies": {
+    "cli-highlight": "^2.1.11",
     "ini-parser": "^0.0.2",
     "jsonc-simple-parser": "^2.2.1",
     "nanoparse": "^1.0.0",
     "node-fetch": "^3.2.4",
-    "planckcolors": "^1.2.0"
+    "planckcolors": "^1.2.0",
+    "unbug": "^1.0.0"
   }
 }
