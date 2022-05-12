@@ -1,0 +1,4 @@
+# Your req config goes here, as ini
+
+[variables]
+page = 3
