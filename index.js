@@ -1,6 +1,8 @@
 import nanoparse from 'nanoparse';
 import color from 'planckcolors';
 
+import './warning.js';
+
 import init from './init.js';
 import run from './run.js';
 

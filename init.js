@@ -29,16 +29,11 @@ export default function init() {
 
 	writeFileSync('.reqrc', `
 # Your req config goes here, as ini
-
-[variables]
-	# The following variables are available to your req files.
-	dev-url = http://localhost:3000
-	;prod-url = https://my-app.com
 `.trim());
 
 	writeFileSync('.req/sample.http', `
 # Sample req file
-POST https://reqres.in/api/users
+POST https://reqres.in/api/users HTTP/1.1
 Content-Type: application/json
 
 {

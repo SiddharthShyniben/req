@@ -2,9 +2,80 @@ import color from 'planckcolors';
 import {dirname, resolve} from 'path';
 import {readFileSync} from 'fs';
 import {fileURLToPath} from 'url';
+import {parse} from './parse.js';
 import {getVariables} from './config.js';
+import {inspect} from 'util';
+import fetch from 'node-fetch';
 
-const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+const STATUSES = {
+	100: 'CONTINUE',
+	101: 'SWITCHING PROTOCOLS',
+	102: 'PROCESSING',
+	103: 'EARLY HINTS',
+
+	200: 'OK',
+	201: 'CREATED',
+	202: 'ACCEPTED',
+	203: 'NON-AUTHORITATIVE INFORMATION',
+	204: 'NO CONTENT',
+	205: 'RESET CONTENT',
+	206: 'PARTIAL CONTENT',
+	207: 'MULTI-STATUS',
+	208: 'ALREADY REPORTED',
+	226: 'IM USED',
+
+	300: 'MULTIPLE CHOICES',
+	301: 'MOVED PERMANENTLY',
+	302: 'FOUND',
+	303: 'SEE OTHER',
+	304: 'NOT MODIFIED',
+	305: 'USE PROXY DEPRECATED',
+	306: 'UNUSED',
+	307: 'TEMPORARY REDIRECT',
+	308: 'PERMANENT REDIRECT',
+
+	400: 'BAD REQUEST',
+	401: 'UNAUTHORIZED',
+	402: 'PAYMENT REQUIRED',
+	403: 'FORBIDDEN',
+	404: 'NOT FOUND',
+	405: 'METHOD NOT ALLOWED',
+	406: 'NOT ACCEPTABLE',
+	407: 'PROXY AUTHENTICATION REQUIRED',
+	408: 'REQUEST TIMEOUT',
+	409: 'CONFLICT',
+	410: 'GONE',
+	411: 'LENGTH REQUIRED',
+	412: 'PRECONDITION FAILED',
+	413: 'PAYLOAD TOO LARGE',
+	414: 'URI TOO LONG',
+	415: 'UNSUPPORTED MEDIA TYPE',
+	416: 'RANGE NOT SATISFIABLE',
+	417: 'EXPECTATION FAILED',
+	418: 'I\'M A TEAPOT',
+	421: 'MISDIRECTED REQUEST',
+	422: 'UNPROCESSABLE ENTITY',
+	423: 'LOCKED',
+	424: 'FAILED DEPENDENCY',
+	425: 'TOO EARLY EXPERIMENTAL',
+	426: 'UPGRADE REQUIRED',
+	428: 'PRECONDITION REQUIRED',
+	429: 'TOO MANY REQUESTS',
+	431: 'REQUEST HEADER FIELDS TOO LARGE',
+	451: 'UNAVAILABLE FOR LEGAL REASONS',
+
+	500: 'INTERNAL SERVER ERROR',
+	501: 'NOT IMPLEMENTED',
+	502: 'BAD GATEWAY',
+	503: 'SERVICE UNAVAILABLE',
+	504: 'GATEWAY TIMEOUT',
+	505: 'HTTP VERSION NOT SUPPORTED',
+	506: 'VARIANT ALSO NEGOTIATES',
+	507: 'INSUFFICIENT STORAGE',
+	508: 'LOOP DETECTED',
+	510: 'NOT EXTENDED',
+	511: 'NETWORK AUTHENTICATION REQUIRED',
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -30,70 +101,103 @@ export default function run(args) {
 		throw e;
 	}
 
-	const lines = content.split('\n').map(line => line.trim()).filter(line => !line.startsWith('#'));
-	let [method, url] = lines[0].split(' ');
+	let {method, headers, body, url} = parse(content);
 
-	if (!HTTP_METHODS.includes(method)) {
-		console.error(color.red(`Invalid method ${method}!`));
-		console.error('Valid methods:', HTTP_METHODS.join(', '));
-		process.exit(1);
-	}
-
-	if (!method || !url) {
-		console.error(color.red('Invalid request file!'));
-		console.error('First line must be in the format:', color.green('METHOD URL'));
-		console.error('Example:', color.bold('GET https://google.com/'));
-		console.error('Example:', color.bold('POST https://api.github.com/repos/planck-js/planck-js/issues'));
-		process.exit(1);
-	}
-
-	const headers = {};
-	let i;
-	for (i = 1; i < lines.length; i++) {
-		if (lines[i] === '') break;
-
-		const [key, value] = lines[i].split(':').map(s => s.trim());
-		if (!key || !value) {
-			console.error(color.red('Invalid request file!'));
-			console.error('Error on line', color.green(i + 1), ':', color.red('Invalid header'));
-			console.error('Headers must be in the format:', color.green('KEY: VALUE'));
-			console.error('Example:', color.bold('Content-Type: application/json'));
-			console.error('Example:', color.bold('Accept: application/vnd.github.v3+json'));
-			process.exit(1);
+	if (method === 'GET' || method === 'HEAD') {
+		if (body) {
+			body = undefined;
+			console.error(color.cyan(`Note: body ignored for ${method} request`));
 		}
-
-		headers[key] = value;
 	}
-
-	let body = parseBody(lines.slice(i + 1).join('\n').trim());
 
 	const variables = Object.assign({}, getVariables(), args.flags);
 	Object.entries(variables).forEach(([v, val]) => {
 		url = url.replaceAll(`{${v}}`, val);
-		if (body) Object.keys(body).forEach(key => {
+		if (typeof body === 'object') Object.keys(body).forEach(key => {
 			body[key] = body[key].replaceAll(`{${v}}`, val);
 		});
 	});
 
+	let showFullResponse;
+	let showFullHeaders;
+
+	if (args.flags.full) {
+		showFullResponse = true;
+		showFullHeaders = true;
+	}
+
+	if ('all-headers' in args.flags) {
+		showFullHeaders = args.flags['all-headers'];
+	}
+
+	if ('full-response' in args.flags) {
+		showFullResponse = args.flags['full-response'];
+	}
+
 	fetch(url, {
 		method,
 		headers,
-		body: body ? JSON.stringify(body) : body
+		body
 	}).then(async res => {
 		try {
-			return await res.json();
+			return {
+				status: res.status,
+				headers: Object.fromEntries(res.headers.entries()),
+				body: await res.clone().json()
+			}
 		} catch (e) {
-			return await res.text();
+			return {
+				status: res.status,
+				headers: Object.fromEntries(res.headers.entries()),
+				body: await res.text()
+			}
 		}
 	}).then(res => {
-		console.log('Got response:', res);
+		console.log(color.bold('  Status:'), colorStatus(res.status + ' ' + STATUSES[res.status] ?? 'UNKNOWN'));
+
+		const hidden = Object.fromEntries(Object.entries(res.headers).filter(commonHiddenFilters(showFullHeaders)))
+		const hiddenLength = Object.keys(res.headers).length - Object.keys(hidden).length;
+		console.log(color.bold('  Headers'), color.dim(`(${hiddenLength} hidden)`) + color.bold(':'));
+
+		Object.entries(hidden).forEach(([key, value]) => {
+			console.log(`    ${key}: ${value}`);
+		});
+
+		let type = res.headers['content-type'];
+		if (type) type = type.split(';')[0].trim();
+		console.log(color.bold('  Body') + color.dim(type ? ` (${type})` : '') + color.bold(':'));
+		console.log(
+			inspect(res.body, {depth: null, colors: true, maxStringLength: showFullResponse ? Infinity : 1000, maxArrayLength: showFullResponse ? Infinity : 100})
+				.split('\n')
+				.map(line => '    ' + line)
+				.join('\n')
+		);
+	}).catch(e => {
+		console.error(color.red('Failed to fetch!'))
+		console.error(e.name + ': ' + e.message)
 	})
 }
 
-function parseBody(body) {
-	try {
-		return JSON.parse(body.replace(/\/\/.*/g, ''));
-	} catch (e) {
-		return undefined;
+function commonHiddenFilters(show) {
+	return show ? () => true : ([k, v]) => {
+		const hidden = [
+			'nel', 'server', 'via', 'x-powered-by', 'alt-svc', 'connection', 'content-length', 'etag', 'report-to', 'expect-ct', 'content-type',
+			'set-cookie', 'expires', 'p3p', 'cache-control'
+		];
+
+		k = k.toLowerCase();
+		if (k.startsWith('access-control')) return false;
+		if (k.startsWith('cf-')) return false;
+		if (hidden.includes(k)) return false;
+		return true;
 	}
+}
+
+function colorStatus(status) {
+	return {
+		2: color.green(status),
+		3: color.yellow(status),
+		4: color.red(status),
+		5: color.red(status)
+	}[Math.floor((+status.split(' ')[0]) / 100)] ?? status;
 }
