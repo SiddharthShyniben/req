@@ -37,8 +37,8 @@ POST https://reqres.in/api/users HTTP/1.1
 Content-Type: application/json
 
 {
-    "name": "morpheus",
-    "job": "mentor",
+	"name": "morpheus",
+	"job": "mentor",
 	"location": "zion",
 	"salary": "freedom"
 }

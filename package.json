@@ -1,30 +1,32 @@
 {
-  "name": "req",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {},
-  "bin": "./index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/SiddharthShyniben/req.git"
-  },
-  "keywords": [],
-  "author": "Siddharth Shyniben <siddharth.muscat@gmail.com>",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/SiddharthShyniben/req/issues"
-  },
-  "homepage": "https://github.com/SiddharthShyniben/req#readme",
-  "type": "module",
-  "dependencies": {
-    "cli-highlight": "^2.1.11",
-    "fuzzysort": "^1.9.0",
-    "ini-parser": "^0.0.2",
-    "jsonc-simple-parser": "^2.2.1",
-    "nanoparse": "^1.0.0",
-    "node-fetch": "^3.2.4",
-    "planckcolors": "^1.2.0",
-    "unbug": "^1.0.0"
-  }
+	"name": "req-cli",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {},
+	"bin": {
+		"req": "./index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/SiddharthShyniben/req.git"
+	},
+	"keywords": [],
+	"author": "Siddharth Shyniben <siddharth.muscat@gmail.com>",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/SiddharthShyniben/req/issues"
+	},
+	"homepage": "https://github.com/SiddharthShyniben/req#readme",
+	"type": "module",
+	"dependencies": {
+		"cli-highlight": "^2.1.11",
+		"fuzzysort": "^1.9.0",
+		"ini-parser": "^0.0.2",
+		"jsonc-simple-parser": "^2.2.1",
+		"nanoparse": "^1.0.0",
+		"node-fetch": "^3.2.4",
+		"planckcolors": "^1.2.0",
+		"unbug": "^1.0.0"
+	}
 }

@@ -201,7 +201,7 @@ export default function run(args) {
 				.join('\n')
 		);
 
-		if (inspected.split('\n').length > sliceLength) {
+		if (inspected.split('\n').length > sliceLength && !showFullResponse) {
 			console.log(color.dim( `    ...${inspected.split('\n').length - sliceLength} more lines (use`), color.yellow('--full-response'), color.dim('to see the whole response)'))
 		}
 	}).catch(e => {
