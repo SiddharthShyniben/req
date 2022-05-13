@@ -16,9 +16,7 @@ designed for speed.
 
 ## Features
 
-<p align='center'>
-	<img src='img/req-1.png' alt='a demo of req'/>
-</p>
+<img src='img/req-1.png' alt='a demo of req'/>
 
 - **Blazing fast**: The whole reason `req` was made is because of the lack of
   fast API testing tools.
