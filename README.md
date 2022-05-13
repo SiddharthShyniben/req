@@ -3,7 +3,7 @@
 `req` is a lightweight, minimal yet powerful HTTP client slash API testing tool
 designed for speed.
 
-<img src='banner.svg' alt='banner' width='100%' />
+<img src='img/banner.svg' alt='banner' width='100%' />
 
 ## Contents
 
@@ -15,6 +15,10 @@ designed for speed.
 - [License](#license)
 
 ## Features
+
+<p align='center'>
+	<img src='img/req-1.png' alt='a demo of req'/>
+</p>
 
 - **Blazing fast**: The whole reason `req` was made is because of the lack of
   fast API testing tools.
