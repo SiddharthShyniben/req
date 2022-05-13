@@ -37,6 +37,8 @@ $ npm i -g req-cli
 
 ## Documentation
 
+![docs](./img/doc.png)
+
 All documentation is built in. Run `req help` to get quick help, and 
 `req help walkthrough` to view a quick walkthrough.
 
@@ -53,3 +55,8 @@ SiddharthShyn.
 ## License
 
 This project uses the [GPLv3](./LICENSE) license.
+
+<p align='center'>
+<img src='img/logo.svg' alt='footer'/>
+</p>
+
