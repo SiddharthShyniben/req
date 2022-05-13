@@ -25,8 +25,15 @@ const commands = {
 	},
 	help,
 	init,
-	run
+	run,
+	async version() {
+		console.log(
+			'req', 'v' + (await import('../package.json', {assert: {type: 'json'}})).default.version
+		);
+	},
 }
+
+commands.v = commands.version;
 
 debug('Starting up...')
 debug('Command:', command)

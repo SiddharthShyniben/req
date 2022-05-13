@@ -56,6 +56,12 @@ const h = {
 *usage*: req help [help|init|run|request-syntax|walkthrough]
 
 Gives you help on the given command.`),
+	version: makeDoc(`
+*req version* - get the version of req
+
+*usage*: req version
+
+Gives you the version of req.`),
 	init: makeDoc(`
 *req init* - initalize req in the current directory
 	
@@ -356,6 +362,8 @@ You can learn more about variables in 'req help variables'.
 Flows are an upcoming feature. I've referred to the them many times in this doc but im too lazy to change lmao.
 `)
 }
+
+h.v = h.version;
 
 function helpFor(thing) {
 	return h[thing] ?? makeDoc(`No help for '${thing}'`);
