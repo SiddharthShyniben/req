@@ -1,5 +1,5 @@
 <p align='left'>
-<img src='img/logo.svg' alt='footer'/>
+<img src='img/logo-small.svg' alt='logo'/>
 </p>
 
 # `req`
@@ -63,4 +63,3 @@ This project uses the [GPLv3](./LICENSE) license.
 <p align='center'>
 <img src='img/logo.svg' alt='footer'/>
 </p>
-
