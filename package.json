@@ -19,6 +19,7 @@
   "type": "module",
   "dependencies": {
     "cli-highlight": "^2.1.11",
+    "fuzzysort": "^1.9.0",
     "ini-parser": "^0.0.2",
     "jsonc-simple-parser": "^2.2.1",
     "nanoparse": "^1.0.0",

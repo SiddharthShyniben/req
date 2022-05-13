@@ -1,11 +1,12 @@
 import color from 'planckcolors';
-import {resolve} from 'path';
-import {readFileSync} from 'fs';
+import {join, resolve} from 'path';
+import {readdirSync, readFileSync} from 'fs';
 import {parse} from './parse.js';
 import {getVariables} from './config.js';
 import {inspect} from 'util';
 import fetch from 'node-fetch';
 import unbug from 'unbug';
+import fuzzysort from 'fuzzysort';
 
 const debug = unbug('run');
 
@@ -100,6 +101,18 @@ export default function run(args) {
 		debug('Error reading:', e)
 		if (e.code === 'ENOENT') {
 			console.error(color.red(`Request ${file} not found!`));
+			try {
+				const allTheFiles = readdirSync(join(__dirname, '.req')).map(k => k.split('.')[0])
+				const similar = fuzzysort.go(file, allTheFiles)
+				const hl = similar.map(k => '\t' + fuzzysort.highlight(k, '\x1b[31m', '\x1B[0m'))
+				if (similar.length) {
+					console.log()
+					console.log('Did you mean:')
+					console.log(hl.join('\n'))
+				}
+			} catch (e) {
+				console.error(color.red(`The .req directory does not exist. Did you forget to initialize?`))
+			}
 			process.exit(1);
 		}
 
