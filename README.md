@@ -1,6 +1,6 @@
 # `req`
 
-![Banner](./banner.svg)
+<img src='banner.svg' alt='banner' width='100%' />
 
 `req` is a lightweight, minimal yet powerful HTTP client slash API testing tool
 designed for quick testing of APIs in the command line.
