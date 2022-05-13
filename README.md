@@ -1,3 +1,7 @@
+<p align='left'>
+<img src='img/logo.svg' alt='footer'/>
+</p>
+
 # `req`
 
 `req` is a lightweight, minimal yet powerful HTTP client slash API testing tool
