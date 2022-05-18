@@ -24,8 +24,9 @@ const commands = {
 	init,
 	run,
 	async version() {
+		const {version} = (await import('../package.json', {assert: {type: 'json'}})).default
 		console.log(
-			'req', 'v' + (await import('../package.json', {assert: {type: 'json'}})).default.version
+			'req', `v${version}`
 		);
 	},
 }

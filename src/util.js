@@ -1,7 +1,7 @@
 import {statSync} from 'node:fs';
 import {resolve} from 'node:path';
 
-export const isIntialized = (dir) => {
+export const isInitialized = (dir) => {
 	try {
 		const dirStats = statSync(resolve(dir, '.req'));
 		const reqDirExists = dirStats.isDirectory();
