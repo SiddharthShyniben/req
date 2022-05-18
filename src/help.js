@@ -1,41 +1,49 @@
-import color from 'planckcolors';
-import {highlight} from 'cli-highlight';
+import color from "planckcolors";
+import { highlight } from "cli-highlight";
 
-const makeDoc = s => s.trim()
-	.replace(/(\[.+?\])/g, (_, m) => color.yellow(m))
-	.replace(/\*(.+?)\*/g, (_, m) => color.bold(m))
-	.replace(/\|(.+?)\|/g, (_, m) => color.dim(m))
-	.replace(/(<.+?>)/g, (_, m) => color.red(m))
-	.replace(/'''([a-z]+)([\s\S]+?)'''/gim, (_, language, code) => {
-		if (language === 'http') {
-			return code
-				.replace(/({[\s\S]+})/g, (_, m) => highlight(m, {language: 'json'}))
-				.replace(/(#.+)/g, color.dim('$1'))
-				.replace(/^([A-Z-]+) ([^ ]+) (HTTP\/\d\.\d)$/gm, (color.yellow('$1 ')) + color.red('$2 ') + color.dim('$3'))
-				.replace(/^([^: \t]+:[ \t]*)((?:.*[^ \t])|)/gm, color.yellow('$1') + '$2')
-				.replace(/({.+?})/g, (_, m) => color.magenta(m))
-				.split('\n')
-				.map(line => '\t' + line)
-				.join('\n')
-		}
+const makeDoc = (s) =>
+  s
+    .trim()
+    .replace(/(\[.+?\])/g, (_, m) => color.yellow(m))
+    .replace(/\*(.+?)\*/g, (_, m) => color.bold(m))
+    .replace(/\|(.+?)\|/g, (_, m) => color.dim(m))
+    .replace(/(<.+?>)/g, (_, m) => color.red(m))
+    .replace(/'''([a-z]+)([\s\S]+?)'''/gim, (_, language, code) => {
+      if (language === "http") {
+        return code
+          .replace(/({[\s\S]+})/g, (_, m) => highlight(m, { language: "json" }))
+          .replace(/(#.+)/g, color.dim("$1"))
+          .replace(
+            /^([A-Z-]+) ([^ ]+) (HTTP\/\d\.\d)$/gm,
+            color.yellow("$1 ") + color.red("$2 ") + color.dim("$3")
+          )
+          .replace(
+            /^([^: \t]+:[ \t]*)((?:.*[^ \t])|)/gm,
+            color.yellow("$1") + "$2"
+          )
+          .replace(/({.+?})/g, (_, m) => color.magenta(m))
+          .split("\n")
+          .map((line) => "\t" + line)
+          .join("\n");
+      }
 
-		return highlight(code, {language})
-			.replace(/(;.+)/g, color.dim('$1'))
-			.split('\n')
-			.map(line => '\t' + line)
-			.join('\n')
-	})
-	.replace(/'(.+?)'/g, (_, m) => color.blackBg(color.red(` ${m} `)))
+      return highlight(code, { language })
+        .replace(/(;.+)/g, color.dim("$1"))
+        .split("\n")
+        .map((line) => "\t" + line)
+        .join("\n");
+    })
+    .replace(/'(.+?)'/g, (_, m) => color.blackBg(color.red(` ${m} `)));
 
 export default function help(args) {
-	const command = args._[1];
+  const command = args._[1];
 
-	if (command) console.log(helpFor(command))
-	else console.log(genericHelp());
+  if (command) console.log(helpFor(command));
+  else console.log(genericHelp());
 }
 
 function genericHelp() {
-	return makeDoc(`
+  return makeDoc(`
 *req* - fast API testing
 
 *usage*: req <command> [args]
@@ -46,23 +54,23 @@ function genericHelp() {
 	run <request>  - run an http request or flow
 
 See 'req help walkthrough' for a quick walkthrough.
-`)
+`);
 }
 
 const h = {
-	help: makeDoc(`
+  help: makeDoc(`
 *req help* - get help
 
 *usage*: req help [help|init|run|request-syntax|walkthrough]
 
 Gives you help on the given command.`),
-	version: makeDoc(`
+  version: makeDoc(`
 *req version* - get the version of req
 
 *usage*: req version
 
 Gives you the version of req.`),
-	init: makeDoc(`
+  init: makeDoc(`
 *req init* - initalize req in the current directory
 	
 *usage*: req init
@@ -70,7 +78,7 @@ Gives you the version of req.`),
 Initializes req in the current directory. Creates a '.reqrc' and a '.req/'
 folder with a sample request '.req/sample.http'
 `),
-	run: makeDoc(`
+  run: makeDoc(`
 *req run* - run a request or flow
 
 *usage*: req run <request or flow> [--full] [--full-response] [--all-headers] [--any variables]
@@ -85,7 +93,7 @@ the [--full] flag is an alias for both flags.
 
 All the other flags will be passed as 'variables' ('req help variables')
 `),
-	'request-syntax': makeDoc(`
+  "request-syntax": makeDoc(`
 All requests in *req* are stored as '.http' files in the '.req' folder.
 
 HTTP files look like this:
@@ -134,7 +142,7 @@ Set-Cookie: k=v;
 Here, the third line is part of the 'Set-Cookie' header
 You can also continue the url like so.
 `),
-	reqrc: makeDoc(`
+  reqrc: makeDoc(`
 The '.reqrc' file is used to configure req. It is an 'ini' file.
 For now, it supports only setting global variables.
 
@@ -144,7 +152,7 @@ For now, it supports only setting global variables.
 	page = 1; in case we forget to pass this somewhere 
 '''
 `),
-	variables: makeDoc(`
+  variables: makeDoc(`
 Variables are one of the key features of req which turns req from a http client
 to a fully-fledged API testing tool.
 
@@ -163,7 +171,7 @@ Variables are sourced from these places:
 
 Each source is overwritten by the next.
 `),
-	walkthrough: makeDoc(`
+  walkthrough: makeDoc(`
 This walkthrough will help you get started with 'req'.
 
 To get started, run 'req init'. This will create a '.reqrc' and a '.req/' folder
@@ -358,13 +366,13 @@ $ *req* run users --page 2
 This time, we can see the second page of results.
 You can learn more about variables in 'req help variables'.
 `),
-	flow: makeDoc(`
+  flow: makeDoc(`
 Flows are an upcoming feature. I've referred to the them many times in this doc but im too lazy to change lmao.
-`)
-}
+`),
+};
 
 h.v = h.version;
 
 function helpFor(thing) {
-	return h[thing] ?? makeDoc(`No help for '${thing}'`);
+  return h[thing] ?? makeDoc(`No help for '${thing}'`);
 }
