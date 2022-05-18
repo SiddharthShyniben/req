@@ -357,9 +357,33 @@ $ *req* run users --page 2
 
 This time, we can see the second page of results.
 You can learn more about variables in 'req help variables'.
+
+Now, lets try creating a flow. 
 `),
 	flow: makeDoc(`
-Flows are an upcoming feature. I've referred to the them many times in this doc but im too lazy to change lmao.
+Flows are JavaScript files which tie together requests. You can use flows to
+chain requests together and simulate real world scenarios.
+
+You can create a flow by writing a it in '.req/{name}.flow.js'.
+
+All flows have access to
+1. All the passed variables in the 'variables' object.
+2. The 'run' function, which can be used to run other flows and requests. When
+   running a requst his function returns a Promise which resolves to the
+   response, which is an object containing the status, headers, and response body.
+		When running a flow, this function returns the value the flow returns.
+
+A sample flow looks like this:
+
+'''javascript
+(async () => {
+	await run("register", {username: "morpheus", password: "matrix"})
+	const {body: {token}} = await run("login", {username: "morpheus", password: "matrix"})
+	const user_data = await run("user", {token})
+	console.log(user_data)
+	finish(user_data) // Returns user data
+})
+'''
 `)
 }
 

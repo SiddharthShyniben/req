@@ -1,12 +1,13 @@
 import color from 'planckcolors';
 import {join, resolve} from 'path';
-import {readdirSync, readFileSync} from 'fs';
+import {existsSync, readdirSync, readFileSync} from 'fs';
 import {parse} from './parse.js';
 import {getVariables} from './config.js';
 import {inspect} from 'util';
 import fetch from 'node-fetch';
 import unbug from 'unbug';
 import fuzzysort from 'fuzzysort';
+import {NodeVM} from 'vm2';
 
 const debug = unbug('run');
 
@@ -80,7 +81,7 @@ const STATUSES = {
 	511: 'NETWORK AUTHENTICATION REQUIRED',
 }
 
-const __dirname = process.cwd();
+const cwd = process.cwd();
 
 export default function run(args) {
 	const file = args._[1];
@@ -91,18 +92,32 @@ export default function run(args) {
 		process.exit(1);
 	}
 
-	const path = resolve(__dirname, '.req', `${file}.http`);
+	const path = resolve(cwd, '.req', `${file}.http`);
 	debug('Reading', path)
 	let content;
 
-	try {
+	if (existsSync(path)) {
 		content = readFileSync(path, 'utf8');
-	} catch (e) {
-		debug('Error reading:', e)
-		if (e.code === 'ENOENT') {
-			console.error(color.red(`Request ${file} not found!`));
+		runHttp(content, args);
+	} else {
+		debug('Does not exist')
+		try {
+			const path = resolve(cwd, '.req', `${file}.flow.js`);
+			debug('Reading flow', path)
+			content = readFileSync(path, 'utf8');
+
 			try {
-				const allTheFiles = readdirSync(join(__dirname, '.req')).map(k => k.split('.')[0])
+				runFlow(content, Object.assign({}, getVariables(), args.flags));
+			} catch (e3) {
+				console.error(color.red('Flow error: '));
+				console.error(e3);
+			}
+		} catch (e2) {
+			console.error(e2)
+			console.error(color.red(`Request ${file} not found!`));
+
+			try {
+				const allTheFiles = readdirSync(join(cwd, '.req')).map(k => k.split('.')[0])
 				const similar = fuzzysort.go(file, allTheFiles)
 				const hl = similar.map(k => '\t' + fuzzysort.highlight(k, '\x1b[31m', '\x1B[0m'))
 				if (similar.length) {
@@ -115,15 +130,13 @@ export default function run(args) {
 			}
 			process.exit(1);
 		}
-
-		throw e;
 	}
+}
 
+function prep(content, args) {
+	debug('Preparing', content)
 	let {method, headers, body, url} = parse(content);
-	debug('Method is', method)
-	debug('Headers are', headers)
-	debug('Body is', body)
-	debug('URL is', url)
+	debug('Parsed', method, headers, body, url)
 
 	if (method === 'GET' || method === 'HEAD') {
 		if (body) {
@@ -134,6 +147,7 @@ export default function run(args) {
 
 	let showFullResponse;
 	let showFullHeaders;
+	let plainJSON;
 
 	if (args.flags.full) {
 		showFullResponse = true;
@@ -151,13 +165,28 @@ export default function run(args) {
 		delete args.flags['full-response'];
 	}
 
+	if ('json' in args.flags) {
+		plainJSON = args.flags.json;
+		delete args.flags.json;
+	}
+
 	const variables = Object.assign({}, getVariables(), args.flags);
-	const addVariables = x => x.replace(/{(\w+)[ \t]*(?:\|[ \t]*(.+))?}/g, (_, key, def) => variables[key] ?? def ?? '')
+	const addVariables = x => x.replace(/{(\w+)[ \t]*(?:\|[ \t]*(.+))?}/g, (_, key, def) => {
+		const replacement = variables[key] ?? def ?? '';
+		debug('Replacing', key, 'with', replacement)
+		return replacement;
+	});
 
 	url = addVariables(url);
 	Object.keys(headers).forEach(key => headers[key] = addVariables(headers[key]))
 	if (typeof body === 'object') Object.keys(body).forEach(key => body[key] = addVariables(body[key]))
 	if (typeof body === 'string') body = addVariables(body);
+
+	return {method, headers, body, url, showFullResponse, showFullHeaders, plainJSON};
+}
+
+function runHttp(content, args) {
+	const {method, headers, body, url, showFullResponse, showFullHeaders, plainJSON} = prep(content, args);
 
 	fetch(url, {method, headers, body}).then(async res => {
 		try {
@@ -174,35 +203,39 @@ export default function run(args) {
 			}
 		}
 	}).then(res => {
-		console.log(colorMethod(method), color.bold(url))
+		if (plainJSON) {
+			console.log(JSON.stringify(res))
+		} else {
+			console.log(colorMethod(method), color.bold(url))
 
-		console.log(color.bold('  Status:'), colorStatus(res.status + ' ' + STATUSES[res.status] ?? 'UNKNOWN'));
+			console.log(color.bold('  Status:'), colorStatus(res.status + ' ' + STATUSES[res.status] ?? 'UNKNOWN'));
 
-		const hidden = Object.fromEntries(Object.entries(res.headers).filter(commonHiddenFilters(showFullHeaders)))
-		const hiddenLength = Object.keys(res.headers).length - Object.keys(hidden).length;
-		console.log(color.bold('  Headers'), color.dim(`(${hiddenLength} hidden)`) + color.bold(':'));
+			const hidden = Object.fromEntries(Object.entries(res.headers).filter(commonHiddenFilters(showFullHeaders)))
+			const hiddenLength = Object.keys(res.headers).length - Object.keys(hidden).length;
+			console.log(color.bold('  Headers'), color.dim(`(${hiddenLength} hidden)`) + color.bold(':'));
 
-		Object.entries(hidden).forEach(([key, value]) => {
-			console.log(`    ${key}: ${value}`);
-		});
+			Object.entries(hidden).forEach(([key, value]) => {
+				console.log(`    ${key}: ${value}`);
+			});
 
-		let type = res.headers['content-type'];
-		if (type) type = type.split(';')[0].trim();
-		console.log(color.bold('  Body') + color.dim(type ? ` (${type})` : '') + color.bold(':'));
+			let type = res.headers['content-type'];
+			if (type) type = type.split(';')[0].trim();
+			console.log(color.bold('  Body') + color.dim(type ? ` (${type})` : '') + color.bold(':'));
 
-		const inspected = inspect(res.body, {depth: null, colors: true, maxStringLength: showFullResponse ? Infinity : 1000, maxArrayLength: showFullResponse ? Infinity : 100})
-		const sliceLength = process.stdout.rows - (10 + Object.keys(hidden).length);
-		
-		console.log(
-			inspected
+			const inspected = inspect(res.body, {depth: null, colors: true, maxStringLength: showFullResponse ? Infinity : 1000, maxArrayLength: showFullResponse ? Infinity : 100})
+			const sliceLength = process.stdout.rows - (10 + Object.keys(hidden).length);
+
+			console.log(
+				inspected
 				.split('\n')
 				.slice(0, showFullResponse ? Infinity : sliceLength)
 				.map(line => '    ' + line)
 				.join('\n')
-		);
+			);
 
-		if (inspected.split('\n').length > sliceLength && !showFullResponse) {
-			console.log(color.dim( `    ...${inspected.split('\n').length - sliceLength} more lines (use`), color.yellow('--full-response'), color.dim('to see the whole response)'))
+			if (inspected.split('\n').length > sliceLength && !showFullResponse) {
+				console.log(color.dim( `    ...${inspected.split('\n').length - sliceLength} more lines (use`), color.yellow('--full-response'), color.dim('to see the whole response)'))
+			}
 		}
 	}).catch(e => {
 		console.error(color.red('Failed to fetch!'))
@@ -262,4 +295,66 @@ function randomColor(str) {
 	]
 
 	return str.split('').map((c, i) => colors[i % colors.length](c)).join('')
+}
+
+function runFlow(source, v) {
+	debug('Running flow', source);
+	let ret = null;
+	const vm = new NodeVM({
+		sandbox: {
+			variables: v,
+			run(request, variables) {
+				debug('Running request', request, 'from', source);
+				let path = resolve(cwd, '.req', request + '.http');
+				if (!existsSync(path)) {
+					debug('Request file not found', path);
+					path = resolve(cwd, '.req', request + '.flow.js');
+					if (!existsSync(path)) {
+						throw new Error('Could not find request ' + request);
+					}
+					const contents = readFileSync(path, 'utf8');
+					return runFlow(contents, Object.assign({}, v ?? {}, variables ?? {}));
+				} else {
+					debug('Request file found', path);
+					const contents = readFileSync(path, 'utf8');
+
+					debug('Request file contents', contents);
+
+					let method, headers, body, url;
+					try {
+						({method, headers, body, url} = prep(contents, {
+							flags: Object.assign({}, v ?? {}, variables)
+						}));
+					} catch (e) {
+						console.error(color.red('Error executing flow: ' + e.message));
+					}
+
+					debug('Request file parsed', method, headers, body, url);
+
+					return fetch(url, {method, headers, body}).then(async res => {
+						try {
+							return {
+								status: res.status,
+								headers: Object.fromEntries(res.headers.entries()),
+								body: await res.clone().json()
+							}
+						} catch (e) {
+							return {
+								status: res.status,
+								headers: Object.fromEntries(res.headers.entries()),
+								body: await res.text()
+							}
+						}
+					})
+				}
+			},
+			finish(k) {
+				ret = k;
+			}
+		},
+		allowAsync: true,
+	});
+
+	vm.run(source);
+	return ret;
 }
