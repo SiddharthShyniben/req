@@ -1,5 +1,4 @@
 import color from 'planckcolors';
-import fetch from 'node-fetch';
 import fuzzysort from 'fuzzysort';
 import {NodeVM} from 'vm2';
 
@@ -9,7 +8,7 @@ import {existsSync, readdirSync, readFileSync} from 'fs';
 
 import {parse} from './parse.js';
 import {getVariables} from './config.js';
-import {isInitialized, STATUSES} from './util.js';
+import {colorMethod, colorStatus, getRequestByName, isInitialized, prepFetch, STATUSES} from './util.js';
 
 const cwd = process.cwd();
 
@@ -26,46 +25,39 @@ export default function run(args) {
 		process.exit(1);
 	}
 
-	let path = resolve(cwd, '.req', `${file}.http`);
-	let content;
+	const req = getRequestByName(file);
+	if (!req) {
+		console.error(color.red(`Request ${file} not found!`));
 
-	if (existsSync(path)) {
-		content = readFileSync(path, 'utf8');
-		return runHttp(content, args);
+		const allTheFiles = readdirSync(join(cwd, '.req')).map(k => k.split('.')[0])
+		const similar = fuzzysort.go(file, allTheFiles)
+		const hl = similar.map(k => '\t' + fuzzysort.highlight(k, '\x1b[31m', '\x1B[0m'))
+
+		console.log()
+		if (similar.length > 0) {
+			console.log('Did you mean:')
+			console.log(hl.join('\n'))
+		} else {
+			console.log('Available requests:')
+			console.log(allTheFiles.map(k => '\t' + k).join('\n'))
+		}
+
+		process.exit(1);
 	}
 
-	path = resolve(cwd, '.req', `${file}.flow.js`);
+	const {type, content} = req;
 
-	if (existsSync(path)) {
-		content = readFileSync(path, 'utf8');
-
+	if (type === 'http') {
+		return runHttp(content, args);
+	} else {
 		try {
-			runFlow(content, Object.assign({}, getVariables(), args.flags));
+			runFlow(content, Object.assign(getVariables(), args.flags));
 		} catch (e) {
 			console.error(color.red('Flow error: '));
 			console.error(e);
 			process.exit(1);
 		}
-
-		return;
 	}
-
-	console.error(color.red(`Request ${file} not found!`));
-
-	const allTheFiles = readdirSync(join(cwd, '.req')).map(k => k.split('.')[0])
-	const similar = fuzzysort.go(file, allTheFiles)
-	const hl = similar.map(k => '\t' + fuzzysort.highlight(k, '\x1b[31m', '\x1B[0m'))
-
-	console.log()
-	if (similar.length > 0) {
-		console.log('Did you mean:')
-		console.log(hl.join('\n'))
-	} else {
-		console.log('Available requests:')
-		console.log(allTheFiles.map(k => '\t' + k).join('\n'))
-	}
-
-	process.exit(1);
 }
 
 function prep(content, args) {
@@ -106,7 +98,6 @@ function prep(content, args) {
 	}
 
 	const variables = Object.assign(getVariables(), args.flags);
-
 	const addVariables = x => x.replace(/{(\w+)[ \t]*(?:\|[ \t]*(.+))?}/g, (_, key, def) => variables[key] ?? def ?? '');
 
 	url = url.replace(/{(\w+)[ \t]*(?:\|[ \t]*(.+))?}/g, (_, key, def) => encodeURIComponent(variables[key] ?? def ?? ''));
@@ -121,21 +112,7 @@ function prep(content, args) {
 function runHttp(content, args) {
 	const {method, headers, body, url, showFullResponse, showFullHeaders, plainJSON} = prep(content, args);
 
-	fetch(url, {method, headers, body}).then(async res => {
-		let body;
-
-		try {
-			body = await res.clone().json();
-		} catch {
-			body = await res.text();
-		}
-
-		return {
-			status: res.status,
-			headers: Object.fromEntries(res.headers.entries()),
-			body
-		};
-	}).then(res => {
+	prepFetch({method, url, headers, body}).then(res => {
 		if (plainJSON) {
 			console.log(JSON.stringify(res))
 			return;
@@ -196,41 +173,6 @@ function commonHiddenFilters(show) {
 	}
 }
 
-function colorStatus(status) {
-	if (status === '418 I\'M A TEAPOT') return randomColor(status);
-	return {
-		2: color.green(status),
-		3: color.yellow(status),
-		4: color.red(status),
-		5: color.red(status)
-	}[Math.floor((+status.split(' ')[0]) / 100)] ?? status;
-}
-
-function colorMethod(method) {
-	const c = {
-		get: color.green,
-		post: color.yellow,
-		put: color.cyan,
-		delete: color.red
-	}[method.toLowerCase()] ?? color.bold;
-	return c(method);
-}
-
-function randomColor(str) {
-	const colors = [
-		color.magenta,
-		color.blue,
-		color.green,
-		color.yellow,
-		color.red,
-		color.yellow,
-		color.green,
-		color.blue
-	]
-
-	return str.split('').map((c, i) => colors[i % colors.length](c)).join('')
-}
-
 function runFlow(source, v) {
 	let ret = null;
 	const vm = new NodeVM({
@@ -259,21 +201,7 @@ function runFlow(source, v) {
 					console.error(color.red(`Error executing flow: ${e.message}`));
 				}
 
-				return fetch(url, {method, headers, body}).then(async res => {
-					let body;
-
-					try {
-						body = await res.clone().json();
-					} catch (e) {
-						body = await res.text();
-					}
-
-					return {
-						status: res.status,
-						headers: Object.fromEntries(res.headers.entries()),
-						body
-					}
-				})
+				return prepFetch({method, url, headers, body})
 			},
 			finish(k) {
 				ret = k;

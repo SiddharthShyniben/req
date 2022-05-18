@@ -2,6 +2,7 @@
 
 import nanoparse from 'nanoparse';
 import color from 'planckcolors';
+import fuzzysort from 'fuzzysort';
 
 import './warning.js';
 
@@ -13,8 +14,21 @@ const args = nanoparse(process.argv.slice(2));
 const command = args._[0];
 
 const commands = {
-	default: () => {
+	default: (c) => {
 		console.log(color.bold(color.red('Invalid command!')));
+
+		const allCommands = ['help', 'init', 'run', 'version'];
+		const similar = fuzzysort.go(c, allCommands)
+		const hl = similar.map(k => '\t' + fuzzysort.highlight(k, '\x1b[31m', '\x1B[0m'))
+
+		console.log()
+		if (similar.length > 0) {
+			console.log('Did you mean:')
+			console.log(hl.join('\n'))
+		} else {
+			console.log('Available commands:')
+			console.log(allCommands.map(k => '\t' + k).join('\n'))
+		}
 	},
 	noCommand: () => {
 		console.log(color.red('No command detected!'));
@@ -24,8 +38,9 @@ const commands = {
 	init,
 	run,
 	async version() {
+		const {version} = (await import('../package.json', {assert: {type: 'json'}})).default
 		console.log(
-			'req', 'v' + (await import('../package.json', {assert: {type: 'json'}})).default.version
+			'req', `v${version}`
 		);
 	},
 }
@@ -35,6 +50,7 @@ commands.v = commands.version;
 if (!command) {
 	commands.noCommand();
 } else {
-	const theCommand = commands[command] || commands.default;
-	theCommand(args);
+	const theCommand = commands[command];
+	if (theCommand) theCommand(args);
+	else commands.default(command);
 }

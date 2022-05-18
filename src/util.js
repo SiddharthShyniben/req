@@ -1,7 +1,10 @@
-import {statSync} from 'node:fs';
-import {resolve} from 'node:path';
+import {statSync} from 'fs';
+import {resolve} from 'path';
 
-export const isIntialized = (dir) => {
+import color from 'planckcolors';
+import fetch from 'node-fetch';
+
+export const isInitialized = (dir) => {
 	try {
 		const dirStats = statSync(resolve(dir, '.req'));
 		const reqDirExists = dirStats.isDirectory();
@@ -84,3 +87,66 @@ export const STATUSES = {
 	510: 'NOT EXTENDED',
 	511: 'NETWORK AUTHENTICATION REQUIRED',
 }
+
+export const colorStatus = status => status === '418 I\'M A TEAPOT' ? randomColor(status) : {
+	2: color.green(status),
+	3: color.yellow(status),
+	4: color.red(status),
+	5: color.red(status)
+}[Math.floor((+status.split(' ')[0]) / 100)] ?? status;
+
+export const colorMethod = method => ({
+	get: color.green,
+	post: color.yellow,
+	put: color.cyan,
+	delete: color.red
+}[method.toLowerCase()] ?? color.bold)(method);
+
+export const colors = [
+	color.magenta,
+	color.blue,
+	color.green,
+	color.yellow,
+	color.red,
+	color.yellow,
+	color.green,
+	color.blue
+]
+
+export const randomColor = str => str.split('').map((c, i) => colors[i % colors.length](c)).join('')
+
+const cwd = process.cwd();
+
+export const getRequestByName = name => {
+	let path = resolve(cwd, '.req', `${name}.http`);
+
+	if (existsSync(path)) {
+		const content = readFileSync(path, 'utf8');
+		return {type: 'http', content};
+	}
+
+	path = resolve(cwd, '.req', `${name}.flow.js`);
+
+	if (existsSync(path)) {
+		const content = readFileSync(path, 'utf8');
+		return {type: 'flow', content};
+	}
+
+	return null;
+}
+
+export const prepFetch = ({method, url, headers, body}) => fetch(url, {method, headers, body}).then(async res => {
+	let body;
+
+	try {
+		body = await res.clone().json();
+	} catch {
+		body = await res.text();
+	}
+
+	return {
+		status: res.status,
+		headers: Object.fromEntries(res.headers.entries()),
+		body
+	};
+});

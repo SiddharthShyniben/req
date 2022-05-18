@@ -34,9 +34,9 @@ export function parse(text) {
 
 		if (!parsedRequest) {
 			let nextLine = lines[i + 1];
-			while (nextLine && clean(nextLine) && nextLine.match(continuationRegex)) {
+			while (nextLine && clean(nextLine) && continuationRegex.test(nextLine)) {
 				const [, l] = nextLine.match(continuationRegex);
-				if (l.match(versionRegex)) line += ' ';
+				if (versionRegex.test(l)) line += ' ';
 				line += l;
 				i++;
 				nextLine = lines[i + 1];
