@@ -39,7 +39,7 @@ $ npm i -g req-cli
 
 ![docs](./img/doc.png)
 
-All documentation is built in. Run `req help` to get quick help, and 
+All documentation is built in. Run `req help` to get quick help, and
 `req help walkthrough` to view a quick walkthrough.
 
 ## Contributing
