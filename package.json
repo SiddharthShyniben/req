@@ -27,7 +27,6 @@
 		"nanoparse": "^1.0.0",
 		"node-fetch": "^3.2.4",
 		"planckcolors": "^1.2.0",
-		"unbug": "^1.0.0",
 		"vm2": "^3.9.9"
 	}
 }
