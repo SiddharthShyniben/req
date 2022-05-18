@@ -1,5 +1,4 @@
-import jsonc from 'jsonc-simple-parser';
-const JSONC = jsonc;
+import JSONC from 'jsonc-simple-parser';
 
 const METHODS = ['DELETE', 'GET', 'HEAD', 'POST', 'PUT', 'CONNECT', 'OPTIONS', 'TRACE', 'COPY', 'LOCK', 'MKCOL', 'MOVE', 'PROPFIND', 'PROPPATCH', 'SEARCH', 'UNLOCK', 'BIND', 'REBIND', 'UNBIND', 'ACL', 'REPORT', 'MKACTIVITY', 'CHECKOUT', 'MERGE', 'M-SEARCH', 'NOTIFY', 'SUBSCRIBE', 'UNSUBSCRIBE', 'PATCH', 'PURGE', 'MKCALENDAR', 'LINK', 'UNLINK'];
 const HTTP_VERSIONS = ['0.9', '1.0', '1.1', '2.0'];
@@ -13,12 +12,9 @@ const clean = line => line.replace(/^\/\/.+/g, '').replace(/^#.+/g, '').trim();
 
 export function parse(text) {
 	const ret = {
-		method: undefined,
-		url: undefined,
-		version: undefined,
 		headers: {},
-		body: undefined,
 	};
+
 	const lines = text.split('\n');
 
 	let parsedRequest = false;
@@ -65,9 +61,7 @@ export function parse(text) {
 			}
 
 			ret.method = method;
-
 			ret.url = url;
-
 			ret.version = realVersion;
 
 			parsedRequest = true;
@@ -93,7 +87,7 @@ export function parse(text) {
 		}
 	}
 
-	if (finalLine == 0) return ret;
+	if (finalLine === 0) return ret;
 
 	const {body, type} = toBody(lines.slice(finalLine).join('\n'))
 	ret.body = body;
@@ -105,10 +99,10 @@ export function parse(text) {
 
 function toBody(source) {
 	try {
-		JSONC.parse(source);
+		const parsed = JSONC.parse(source);
 
 		return {
-			body: JSONC.stringify(JSONC.parse(source)),
+			body: JSONC.stringify(parsed),
 			type: 'json'
 		}
 	} catch (e) {
@@ -118,4 +112,3 @@ function toBody(source) {
 		}
 	}
 }
-
