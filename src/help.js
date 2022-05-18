@@ -319,7 +319,7 @@ Now, we can pass the variable to thq request like so:
 
 '''console
 $ *req* run users --page 2
-			GET *https://reqres.in/api/users?page=2*
+GET *https://reqres.in/api/users?page=2*
   *Status*: 200 OK
   *Headers* |(14 hidden)|:
     age: 5997
@@ -358,7 +358,111 @@ $ *req* run users --page 2
 This time, we can see the second page of results.
 You can learn more about variables in 'req help variables'.
 
-Now, lets try creating a flow. 
+Now, lets try creating a flow. Suppose you have an API at 'https://localhost:3000/'
+where you can log in and sign up. Lets create requests and a flow for that.
+
+Open up '.req/login.http' in your text editor and add this:
+
+'''http
+POST https://localhost:3000/login HTTP/1.1
+Content-Type: application/json
+
+{
+	"username": "{username}",
+	"password": "{password}"
+}
+'''
+
+Now, lets create the signup request in '.req/signup.http':
+
+'''http
+POST https://localhost:3000/signup HTTP/1.1
+Content-Type: application/json
+
+{
+	"username": "{username}",
+	"password": "{password}",
+	"email": "{email}"
+}
+'''
+
+We can also create a third request to view user info:
+
+'''http
+GET https://localhost:3000/user HTTP/1.1
+Authorization: Bearer {token}
+'''
+
+Let's test these out.
+
+'''console
+$ *req* run signup --username user --password pass --email "user@place.com"
+POST *https://localhost:3000/signup*
+  *Status*: 201 CREATED
+  *Headers* |(14 hidden)|:
+	age: 5997
+  *Body* |(application/json)|:
+	{
+		"username": "user",
+		"email": "user@place.com",
+		"password": "pass"
+	}
+
+$ *req* run login --username user --password pass
+POST *https://localhost:3000/login*
+  *Status*: 200 OK
+  *Headers* |(14 hidden)|:
+	age: 5997
+  *Body* |(application/json)|:
+	{
+		"token": "sdfj30J02fj29f2p"
+	}
+
+$ *req* run user --token sdfj30J02fj29f2p
+GET *https://localhost:3000/user*
+  *Status*: 200 OK
+  *Headers* |(14 hidden)|:
+	age: 5997
+  *Body* |(application/json)|:
+	{
+		"username": "user",
+		"email": "user@place.com",
+	}
+'''
+
+Thats cool, but we need to run three requests to get the user info. We can
+automate this by creating a flow. Lets create a flow called 'auth' in
+'.req/auth.flow.js':
+
+'''js
+(async () => {
+	const {username, password, email} = variables;
+
+	console.log("Signup with", username, password);
+	const signup = await run('signup', {username, password, email});
+
+	console.log("Login with", username, password);
+	const login = await run('login', {username, password});
+	const {token} = login.body;
+
+	console.log("Fetching user data with token", token);
+	const user = await run('user', {token});
+	console.log("User data", user.body);
+})()
+'''
+
+This flow runs all three requests at once. Try running it:
+
+'''console
+$ *req* run auth
+Signup with user pass
+Login with user pass
+Fetching user data with token nggypnglydngraad
+User data {
+	"username": "user",
+	"email": "user@place.com"
+}
+'''
 `),
 	flow: makeDoc(`
 Flows are JavaScript files which tie together requests. You can use flows to
@@ -371,12 +475,12 @@ All flows have access to
 2. The 'run' function, which can be used to run other flows and requests. When
    running a requst his function returns a Promise which resolves to the
    response, which is an object containing the status, headers, and response body.
-		When running a flow, this function returns the value the flow returns.
+   When running a flow, this function returns the value the flow returns.
 
 A sample flow looks like this:
 
 '''javascript
-(async () => {
+(async () => { // This is not necessary and is only used for async/await
 	await run("register", {username: "morpheus", password: "matrix"})
 	const {body: {token}} = await run("login", {username: "morpheus", password: "matrix"})
 	const user_data = await run("user", {token})

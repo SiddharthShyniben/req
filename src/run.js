@@ -151,6 +151,7 @@ function runHttp(content, args) {
 		console.error(color.red('Failed to send request!'))
 
 		if (e.message.toLowerCase().includes('invalid url')) console.error('You passed an invalid URL!')
+		if (e.code === 'ECONNREFUSED') console.error('Connection refused!')
 		else console.error(e);
 
 		process.exit(1)
