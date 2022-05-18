@@ -1,5 +1,5 @@
 import color from 'planckcolors';
-import {mkdirSync, readdirSync, readFileSync, writeFileSync} from 'fs';
+import {mkdirSync, readdirSync, writeFileSync} from 'fs';
 
 export default function init() {
 	console.log('Initializing req in current directory...');
