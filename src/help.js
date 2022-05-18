@@ -241,7 +241,7 @@ POST *https://reqres.in/api/users*
     etag: W/"79-MEAYpc0MhwHX2uP7lKGAdEBMx8s"
     expect-ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
     nel: {"success_fraction":0,"report_to":"cf-nel","max_age":604800}
-    report-to: {"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=ntfm%2FdG82lCwNoI1DEY%2Fx%2F%2Bvbj9A%2Fn%2FE0xcyOqXjpQ7WiSA4iG5R%2BOnBjDzZ6CYFs6ltl1TSfVeZMB%2FmGhF1kjhXY%2FRtDz28ItiH37STrIJacYjwcItJ4kBm%2B6E%3D"}],"group":"cf-nel","max_age":604800}
+    report-to: {"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v3?s=ntfm%2FdG82lCwNoI1DEY%2Fx%2F%2Bvbj9A%2Fn%2FE0xcyOqXjpQ7WiSA4iG5R%2BOnBjDzZ6CYFs6ltl1TSfVeZMB%2FmGhF1kjhXY%2FRtDz28ItiH37STrIJacYjwcItJ4kBm%2B6E%3D"}],"group":"cf-nel","max_age":604800}
     server: cloudflare
     via: 1.1 vegur
     x-powered-by: Express
