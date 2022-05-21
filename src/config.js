@@ -1,4 +1,4 @@
-import {parse} from 'ini-parser';
+import {parse} from 'ini';
 import {readFileSync} from 'fs';
 
 export function getVariables() {
