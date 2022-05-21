@@ -11,7 +11,12 @@
 		"type": "git",
 		"url": "git+https://github.com/SiddharthShyniben/req.git"
 	},
-	"keywords": [],
+	"keywords": [
+		"request",
+		"api",
+		"api-testing",
+		"cli"
+	],
 	"author": "Siddharth Shyniben <siddharth.muscat@gmail.com>",
 	"license": "GPL-3.0",
 	"bugs": {
