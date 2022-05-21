@@ -1,37 +1,37 @@
 {
-	"name": "req-cli",
-	"version": "1.0.0",
-	"description": "",
-	"main": "src/index.js",
-	"scripts": {},
-	"bin": {
-		"req": "src/index.js"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/SiddharthShyniben/req.git"
-	},
-	"keywords": [
-		"request",
-		"api",
-		"api-testing",
-		"cli"
-	],
-	"author": "Siddharth Shyniben <siddharth.muscat@gmail.com>",
-	"license": "GPL-3.0",
-	"bugs": {
-		"url": "https://github.com/SiddharthShyniben/req/issues"
-	},
-	"homepage": "https://github.com/SiddharthShyniben/req#readme",
-	"type": "module",
-	"dependencies": {
-		"cli-highlight": "^2.1.11",
-		"fuzzysort": "^1.9.0",
-		"ini": "^3.0.0",
-		"jsonc-simple-parser": "^2.2.1",
-		"nanoparse": "^1.0.0",
-		"node-fetch": "^3.2.4",
-		"planckcolors": "^1.2.0",
-		"vm2": "^3.9.9"
-	}
+  "name": "req-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {},
+  "bin": {
+    "req": "src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SiddharthShyniben/req.git"
+  },
+  "keywords": [
+    "request",
+    "api",
+    "api-testing",
+    "cli"
+  ],
+  "author": "Siddharth Shyniben <siddharth.muscat@gmail.com>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/SiddharthShyniben/req/issues"
+  },
+  "homepage": "https://github.com/SiddharthShyniben/req#readme",
+  "type": "module",
+  "dependencies": {
+    "cli-highlight": "^2.1.11",
+    "fuzzysort": "^1.9.0",
+    "ini": "^3.0.0",
+    "jsonc-simple-parser": "^2.2.1",
+    "nanoparse": "^1.0.0",
+    "node-fetch": "^3.2.4",
+    "planckcolors": "^1.2.0",
+    "vm2": "^3.9.9"
+  }
 }
