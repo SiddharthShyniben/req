@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- Nothing yet
+## [1.0.2] - 2022-05-22
+
+- Make comments work better
 
 ## [1.0.1] - 2022-05-21
 
@@ -18,5 +20,6 @@ All notable changes to this project will be documented in this file.
 - Added documentation
 
 [Unreleased]: https://github.com/SiddharthShyniben/req/compare/v1.0.1...HEAD
+[1.0.2]: https://github.com/SiddharthShyniben/req/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/SiddharthShyniben/req/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/SiddharthShyniben/req/releases/tag/v1.0.0
