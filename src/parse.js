@@ -13,7 +13,9 @@ export function parse(text) {
 		headers: {},
 	};
 
-	const lines = text.split('\n');
+	const lines = text
+		.replace(/\/\/[^\n\r]+?(?:\*\)|[\n\r])/g, '')
+		.split('\n');
 
 	let parsedRequest = false;
 	let parsedHeaders = false;
