@@ -1,5 +1,7 @@
 <h1><img src='img/logo-small.svg' alt='logo' align='center' /> <code>req</code></h1>
 
+<a href="https://www.producthunt.com/posts/req-2?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-req&#0045;2" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=347763&theme=dark" alt="req - A&#0032;lightweight&#0044;&#0032;minimal&#0032;yet&#0032;powerful&#0032;API&#0032;testing&#0032;tool | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+
 `req` is a lightweight, minimal yet powerful HTTP client slash API testing tool
 designed for speed.
 
