@@ -9,6 +9,8 @@ import './warning.js';
 import init from './init.js';
 import run from './run.js';
 import help from './help.js';
+import { readFileSync } from "fs";
+
 
 const args = nanoparse(process.argv.slice(2));
 const command = args._[0];
@@ -38,7 +40,8 @@ const commands = {
 	init,
 	run,
 	async version() {
-		const {version} = (await import('../package.json', {assert: {type: 'json'}})).default
+		const packageJson = JSON.parse(readFileSync(require.resolve("../package.json")).toString());
+		const {version} = packageJson.default
 		console.log(
 			'req', `v${version}`
 		);
