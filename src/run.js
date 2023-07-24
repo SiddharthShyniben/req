@@ -102,8 +102,14 @@ function prep(content, args) {
 
 	url = url.replace(/{(\w+)[ \t]*(?:\|[ \t]*(.+))?}/g, (_, key, def) => encodeURIComponent(variables[key] ?? def ?? ''));
 
-	Object.keys(headers).forEach(key => headers[key] = addVariables(headers[key]))
-	if (typeof body === 'object') Object.keys(body).forEach(key => body[key] = addVariables(body[key]))
+	Object.keys(headers).forEach(key => {
+		headers[key] = addVariables(headers[key])
+	});
+
+	if (typeof body === 'object') Object.keys(body).forEach(key => {
+		body[key] = addVariables(body[key])
+	});
+
 	if (typeof body === 'string') body = addVariables(body);
 
 	return {method, headers, body, url, showFullResponse, showFullHeaders, plainJSON};
@@ -168,9 +174,7 @@ function commonHiddenFilters(show) {
 		k = k.toLowerCase();
 		if (k.startsWith('access-control')) return false;
 		if (k.startsWith('cf-')) return false;
-		if (hidden.includes(k)) return false;
-
-		return true;
+		return !hidden.includes(k)
 	}
 }
 

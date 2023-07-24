@@ -92,13 +92,6 @@ export const STATUSES = {
 	511: 'NETWORK AUTHENTICATION REQUIRED',
 }
 
-export const colorStatus = status => status === '418 I\'M A TEAPOT' ? randomColor(status) : {
-	2: color.green(status),
-	3: color.yellow(status),
-	4: color.red(status),
-	5: color.red(status)
-}[Math.floor((+status.split(' ')[0]) / 100)] ?? status;
-
 export const colorMethod = method => ({
 	get: color.green,
 	post: color.yellow,
@@ -118,6 +111,13 @@ export const colors = [
 ]
 
 export const randomColor = str => str.split('').map((c, i) => colors[i % colors.length](c)).join('')
+
+export const colorStatus = status => status === '418 I\'M A TEAPOT' ? randomColor(status) : {
+	2: color.green(status),
+	3: color.yellow(status),
+	4: color.red(status),
+	5: color.red(status)
+}[Math.floor((+status.split(' ')[0]) / 100)] ?? status;
 
 const cwd = process.cwd();
 
