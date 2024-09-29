@@ -14,7 +14,7 @@ export function parse(text) {
 	};
 
 	const lines = text
-		.replace(/\/\/[^\n\r]+?(?:\*\)|[\n\r])/g, '')
+		// .replace(/\/\/[^\n\r]+?(?:\*\)|[\n\r])/g, '')
 		.split('\n');
 
 	let parsedRequest = false;
